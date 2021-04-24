@@ -1,2 +1,2 @@
-#  Analyza skodliveho sifrovaneho setovej prevadzky
+#  Analyza skodlivej sifrovanej setovej prevadzky
  Bakalarska praca 
