@@ -1,7 +1,7 @@
-# This is a sample Python script.
+__author__ = "Branislav Dubec"
+__credits__ = ["Petr Chmelar"]
+__version__ = "1.0.0"
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 import tensorflow as tf
 import keras
@@ -11,15 +11,16 @@ from sklearn import preprocessing
 import pickle
 import matplotlib.pyplot as plt
 
-df = pd.read_csv (r'csv\2015-03-19_capture-win.csv')
-test_d = pd.read_csv(r'csv\2017-05-02_normal.csv')
+train = pd.read_csv(r'csv\2017-05-02_normal.csv')
 columns = ['duration','srcPort','dstPort','service','srcBytes', 'dstBytes',
            'flag', 'land', 'urgent', 'ja3Ver']
+
 columns.extend(['ja3Cipher' + str(i) for i in range(36)])
 columns.extend(['ja3Extension' + str(i) for i in range(26)])
 columns.extend(['ja3Ec' + str(i) for i in range(6)])
 columns.extend(['ja3Ecpf' + str(i) for i in range(2)])
 columns.extend(['blacklisted'])
+
 def normDataFrame(df):
     df.drop(df[df['ja3']  == "0"].index , inplace=True)
     df = df.drop('srcIp' , axis=1)
@@ -81,25 +82,22 @@ def get_compiled_model():
                 metrics=['accuracy'])
   return model
 
-#test = normDataFrame(df)
 
-train = normDataFrame(test_d)
-exit()
+
+train = normDataFrame(train)
+
 #normalizacia?
 #min_max_scaler = preprocessing.MinMaxScaler()
 #x_scaled = min_max_scaler.fit_transform(test.values)
 #test = pd.DataFrame(x_scaled, columns=columns)
-print(test)
-test = tf.keras.utils.normalize(test)
-print(test)
-exit()
-blacklisted = test.pop('blacklisted')
-dataset = tf.data.Dataset.from_tensor_slices((test.values, blacklisted.values))
+train = tf.keras.utils.normalize(train)
 
-blacklisted_test = train.pop('blacklisted')
-dataset_t = tf.data.Dataset.from_tensor_slices((train.values, blacklisted_test.values))
-train_dataset = dataset.shuffle(len(test)).batch(32)
+
+trainBlacklisted = train('blacklisted')
+dataset = tf.data.Dataset.from_tensor_slices((train.values, trainBlacklisted.values))
+
+
 model = get_compiled_model()
-model.fit(train_dataset, epochs=15)
+
 #model.evaluate(dataset_t)
 
