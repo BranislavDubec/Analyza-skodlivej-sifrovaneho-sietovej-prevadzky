@@ -21,6 +21,8 @@ from hashlib import md5
 import psycopg2
 import pandas as pd
 import re
+from sklearn import preprocessing
+import numpy as np
 
 df = pd.DataFrame(columns=['duration', 'srcIp', 'srcPort', 'dstIp',
                            'dstPort', 'service', 'srcBytes', 'dstBytes', 'flag',
@@ -234,12 +236,62 @@ def processPacket(packet):
     df.at[id, 'duration'] = packet.tcp.time_relative
 
 
+columns = ['duration','srcPort','dstPort','service','srcBytes', 'dstBytes',
+           'flag', 'land', 'urgent', 'ja3Ver']
+
+columns.extend(['ja3Cipher' + str(i) for i in range(36)])
+columns.extend(['ja3Extension' + str(i) for i in range(26)])
+columns.extend(['ja3Ec' + str(i) for i in range(6)])
+columns.extend(['ja3Ecpf' + str(i) for i in range(2)])
+columns.extend(['blacklisted'])
+
+def normDataFrame(dataf):
+    print(dataf['ja3'])
+    dataf.drop(dataf[dataf['ja3']  == 0].index , inplace=True)
+    dataf = dataf.drop('srcIp' , axis=1)
+    dataf = dataf.drop('dstIp', axis=1)
+    data = []
+    ct_b = 0
+    ct_g = 0
+    new_df = pd.DataFrame(columns = columns, dtype=np.float64)
+    for index, row in dataf.iterrows():
+        data.append(float(row['duration']))
+        data.append(float(row['srcPort']))
+        data.append(float(row['dstPort']))
+        data.append(float(row['service']))
+        data.append(float(row['srcBytes']))
+        data.append(float(row['dstBytes']))
+        data.append(float(row['flag']))
+        data.append(float(row['land']))
+        data.append(float(row['urgent']))
+        data.append(float(row['ja3Ver']))
+        ciphers = row['ja3Cipher'].split('-')
+        for cipher in ciphers:
+            data.append(float(cipher))
+        extensions = row['ja3Extension'].split('-')
+        for extension in extensions:
+            data.append(float(extension))
+        ecs = row['ja3Ec'].split('-')
+        for ec in ecs:
+            data.append(float(ec))
+        ecpfs = row['ja3Ecpf'].split('-')
+        for ecpf in ecpfs:
+            data.append(float(ecpf))
+        data.append(float(row['blacklisted']))
+        if(row['blacklisted'] == 0):
+            ct_b = ct_b+1
+        else:
+            ct_g = ct_g+1
+        new_df.loc[len(new_df)] = data
+        data = []
+    print("Good: ",ct_b,"malicious: ",ct_g)
+    return new_df
 def createCSVfromPcap(pcap, filename):
     global records, df
     session = []
     cap = pyshark.FileCapture(pcap, keep_packets=False)
-    ct = 0
     ct_h = 0
+    ct=0
     for packet in cap:
         ct = ct + 1
         print("Packet number", str(ct), str(filename))
@@ -268,14 +320,25 @@ def createCSVfromPcap(pcap, filename):
                 df.at[int(ja3_dic['tcpStream']), 'ja3Ecpf'] = ja3_dic['ja3Ecpf']
 
         except:
-            pass
-    df.to_csv("csv" + '\\' + str(filename)[:-5] + '.csv')
-    df = df.iloc[0:0]
 
+            pass
+
+    df = normDataFrame(df)
+
+    min_max_scaler = preprocessing.MinMaxScaler()
+    x_scaled = min_max_scaler.fit_transform(df.values)
+    df = pd.DataFrame(x_scaled, columns=columns)
+    df.to_csv("csv_used" + '\\' + str(filename)[:-5] + '_normalized_new' +  '.csv', header=False)
+    print(filename)
+    df = pd.DataFrame(columns=['duration', 'srcIp', 'srcPort', 'dstIp',
+                               'dstPort', 'service', 'srcBytes', 'dstBytes', 'flag',
+                               'land', 'urgent', 'ja3', 'ja3Ver', 'ja3Cipher',
+                               'ja3Extension', 'ja3Ec', 'ja3Ecpf', 'blacklisted'])
+    df = df.iloc[0:0]
 
 for root, dirs, files in os.walk('pcap'):
     for name in files:
         filepath = root + os.sep + name
-        if name.startswith("mac_split"):
-            print(name)
+        if filepath.startswith("pcap\\exercise_2"):
             createCSVfromPcap(filepath, name)
+
