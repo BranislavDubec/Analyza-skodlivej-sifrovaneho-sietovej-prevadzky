@@ -246,7 +246,6 @@ columns.extend(['ja3Ecpf' + str(i) for i in range(2)])
 columns.extend(['blacklisted'])
 
 def normDataFrame(dataf):
-    print(dataf['ja3'])
     dataf.drop(dataf[dataf['ja3']  == 0].index , inplace=True)
     dataf = dataf.drop('srcIp' , axis=1)
     dataf = dataf.drop('dstIp', axis=1)
@@ -278,13 +277,13 @@ def normDataFrame(dataf):
         for ecpf in ecpfs:
             data.append(float(ecpf))
         data.append(float(row['blacklisted']))
-        if(row['blacklisted'] == 0):
-            ct_b = ct_b+1
+        if int(row['blacklisted']) == 0:
+            ct_b = ct_b + 1
         else:
-            ct_g = ct_g+1
+            ct_g = ct_g + 1
         new_df.loc[len(new_df)] = data
         data = []
-    print("Good: ",ct_b,"malicious: ",ct_g)
+    print("Good: ",ct_b, "malicious: ",ct_g)
     return new_df
 def createCSVfromPcap(pcap, filename):
     global records, df
@@ -322,13 +321,13 @@ def createCSVfromPcap(pcap, filename):
         except:
 
             pass
-
+    df.to_csv("csv_used" + '\\' + str(filename)[:-5]  + '.csv')
     df = normDataFrame(df)
 
     min_max_scaler = preprocessing.MinMaxScaler()
     x_scaled = min_max_scaler.fit_transform(df.values)
     df = pd.DataFrame(x_scaled, columns=columns)
-    df.to_csv("csv_used" + '\\' + str(filename)[:-5] + '_normalized_new' +  '.csv', header=False)
+    df.to_csv("csv_used\\normalized\\"  + str(filename)[:-5] + '_normalized' + '.csv', header=False)
     print(filename)
     df = pd.DataFrame(columns=['duration', 'srcIp', 'srcPort', 'dstIp',
                                'dstPort', 'service', 'srcBytes', 'dstBytes', 'flag',
@@ -336,9 +335,9 @@ def createCSVfromPcap(pcap, filename):
                                'ja3Extension', 'ja3Ec', 'ja3Ecpf', 'blacklisted'])
     df = df.iloc[0:0]
 
-for root, dirs, files in os.walk('pcap'):
+for root, dirs, files in os.walk('pcap_used'):
     for name in files:
         filepath = root + os.sep + name
-        if filepath.startswith("pcap\\exercise_2"):
+        if filepath.endswith("pcap"):
             createCSVfromPcap(filepath, name)
 
