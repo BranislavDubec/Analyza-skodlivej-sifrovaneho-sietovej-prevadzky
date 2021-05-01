@@ -324,10 +324,13 @@ def createCSVfromPcap(pcap, filename):
     df.to_csv("csv_used" + '\\' + str(filename)[:-5]  + '.csv')
     df = normDataFrame(df)
 
+    df_normalize = df.loc[:, df.columns != 'blacklisted'] # nebrat hodnoty z posledného stĺpca
     min_max_scaler = preprocessing.MinMaxScaler()
-    x_scaled = min_max_scaler.fit_transform(df.values)
+    x_scaled = min_max_scaler.fit_transform(df_normalize.values)
+    x_scaled = np.append(x_scaled, df.loc[:, df.columns == 'blacklisted'], axis=1)
+
     df = pd.DataFrame(x_scaled, columns=columns)
-    df.to_csv("csv_used\\normalized\\"  + str(filename)[:-5] + '_normalized' + '.csv', header=False)
+    df.to_csv("csv_used\\normalized\\"  + str(filename)[:-5] + '_normalized' + '.csv', header=False, index=False)
     print(filename)
     df = pd.DataFrame(columns=['duration', 'srcIp', 'srcPort', 'dstIp',
                                'dstPort', 'service', 'srcBytes', 'dstBytes', 'flag',
