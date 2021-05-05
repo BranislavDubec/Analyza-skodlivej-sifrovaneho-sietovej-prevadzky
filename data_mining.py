@@ -24,6 +24,7 @@ import re
 from sklearn import preprocessing
 import numpy as np
 
+
 df = pd.DataFrame(columns=['duration', 'srcIp', 'srcPort', 'dstIp',
                            'dstPort', 'service', 'srcBytes', 'dstBytes', 'flag',
                            'land', 'urgent', 'ja3', 'ja3Ver', 'ja3Cipher',
@@ -36,7 +37,7 @@ GREASE_TABLE = {0x0a0a: True, 0x1a1a: True, 0x2a2a: True, 0x3a3a: True,
 
 ja3Blacklist = []
 
-
+# connects to database to take malicious ja3 fingerprints
 def conn():
     return psycopg2.connect(
         host="localhost",
@@ -48,7 +49,7 @@ def conn():
 
 dbconn = conn()
 
-
+# returns ja3 table from database
 def getDataFromTable():
     sql = "SELECT * FROM ja3"
     blcursor.execute(sql)
@@ -67,6 +68,7 @@ except Exception as e:
 records = getDataFromTable()
 
 
+# function returns fields, that ja3 uses to create fingerprint
 def client_ja3(packet):
     # ja3 fields
     tls_version = ciphers = extensions = elliptic_curve = ec_pointformat = ""
@@ -154,7 +156,7 @@ def client_ja3(packet):
     }
     return record
 
-
+# add or delete values from ja3 fields, so all the ja3 values have same number of features
 def updateJA3(dic):
     while dic['ja3Ciphers'].count('-') < 35:
         if len(dic['ja3Ciphers']) == 0:
@@ -190,7 +192,7 @@ def updateJA3(dic):
         dic["ja3Ecpf"] = dic["ja3Ecpf"][:pos]
     return dic
 
-
+# add new tcp stream into dataframe
 def processFirstPacket(packet):
     global df
 
@@ -215,7 +217,7 @@ def processFirstPacket(packet):
             }
     df = df.append(data, ignore_index=True)
 
-
+# updates TCP stream in dataframe
 def processPacket(packet):
     global df
     id = int(packet.tcp.stream)
@@ -245,6 +247,7 @@ columns.extend(['ja3Ec' + str(i) for i in range(6)])
 columns.extend(['ja3Ecpf' + str(i) for i in range(2)])
 columns.extend(['blacklisted'])
 
+# ja3 fields are parsed to individual features
 def normDataFrame(dataf):
     dataf.drop(dataf[dataf['ja3']  == 0].index , inplace=True)
     dataf = dataf.drop('srcIp' , axis=1)
@@ -285,6 +288,8 @@ def normDataFrame(dataf):
         data = []
     print("Good: ",ct_b, "malicious: ",ct_g)
     return new_df
+
+# create csv file of each TCP stream in \csv_used and normalized csv file in \csv_used\normalized of each TCP stream with JA3 fingerprint
 def createCSVfromPcap(pcap, filename):
     global records, df
     session = []
