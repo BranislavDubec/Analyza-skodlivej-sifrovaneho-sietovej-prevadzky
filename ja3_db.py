@@ -8,6 +8,7 @@ __version__ = "1.0.0"
 import psycopg2
 import csv
 
+
 BLACKLISTS = "ja3_fingerprints.csv"
 
 
@@ -23,19 +24,21 @@ def conn():
 def insertDataToTable(table, vals):
     """
     Simplifies the insert query and executes it.
-
     Parameters:
         table(str): Identifies the table to insert to.
         vals(): The value(s) to insert. Data type depends on the the DB.
     """
+    try:
+        sql = "INSERT INTO {0}  VALUES (%s,%s,%s,%s)".format(table)
+        blcursor.execute(sql, vals)
+        dbconn.commit()
+    except Exception as e:
+        print(e)
 
-    sql = "INSERT INTO {0}  VALUES (%s,%s,%s,%s)".format(table)
-    blcursor.execute(sql, vals)
-    bldb.commit()
-
-
+"""
+   Reads data from BLACKLISTS file and calls insertDataToTable for each row.
+"""
 def getDataFromCSV():
-    links = tuple()
     with open(BLACKLISTS) as csvf:
         reader = csv.reader(csvf)
         for row in reader:
@@ -46,16 +49,14 @@ def getDataFromCSV():
                 r = tuple((r,))
                 links = links + r
             insertDataToTable("ja3", links)
-        links = [x for x in links if x != '']
-        return links
+
 
 
 dbconn = conn()
 try:
     # blacklist BD connection
-    bldb = dbconn
     blcursor = dbconn.cursor()
 
 except Exception as e:
     print(str(e))
-sheet = getDataFromCSV()
+getDataFromCSV()

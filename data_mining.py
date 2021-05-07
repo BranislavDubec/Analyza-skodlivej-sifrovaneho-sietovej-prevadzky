@@ -1,12 +1,14 @@
 """
-    Script create csv files from pcap files in folder pcap/*.pcap.
+    Script create csv files from pcap files in folder pcap_used/*.pcap.
     These csv files contains information about TCP streams and their JA3 fingerprint.
     It determines whether is stream malicious based on comparing individual JA3 fingerprint with
     blacklisted values of JA3 fingerprints in postgres table 'ja3'.
+    CSV files are in csv_used.
+    Also creates normalized csv files, stored in csv_used/normalized.
 
 """
 __author__ = "Branislav Dubec"
-__version__ = "1.0.0"
+__version__ = "1.2.1"
 __copyright__ = "Adel 0x4d31 Karimi"
 
 # Copyright (c) 2019, Adel "0x4d31" Karimi.
@@ -49,7 +51,7 @@ def conn():
 
 dbconn = conn()
 
-# returns ja3 table from database
+# returns all rows from ja3 table from database blacklistdb
 def getDataFromTable():
     sql = "SELECT * FROM ja3"
     blcursor.execute(sql)
@@ -60,11 +62,11 @@ def getDataFromTable():
 
 try:
     # blacklist BD connection
-    bldb = dbconn
     blcursor = dbconn.cursor()
 
 except Exception as e:
     print(str(e))
+
 records = getDataFromTable()
 
 
@@ -228,6 +230,7 @@ def processPacket(packet):
         srcIp = packet.ip.addr
     if srcIp == df.at[id, 'srcIp']:
         isClientSrc = True
+
     if isClientSrc:
         df.at[id, 'srcBytes'] = int(df.at[id, 'srcBytes']) + int(packet.length)
     else:
@@ -247,8 +250,8 @@ columns.extend(['ja3Ec' + str(i) for i in range(6)])
 columns.extend(['ja3Ecpf' + str(i) for i in range(2)])
 columns.extend(['blacklisted'])
 
-# ja3 fields are parsed to individual features
-def normDataFrame(dataf):
+# each value in each ja3 field is separated and becomes individual features in dataset
+def separataJA3fields(dataf):
     dataf.drop(dataf[dataf['ja3']  == 0].index , inplace=True)
     dataf = dataf.drop('srcIp' , axis=1)
     dataf = dataf.drop('dstIp', axis=1)
@@ -327,9 +330,10 @@ def createCSVfromPcap(pcap, filename):
 
             pass
     df.to_csv("csv_used" + '\\' + str(filename)[:-5]  + '.csv')
-    df = normDataFrame(df)
+    df = separataJA3fields(df)
 
-    df_normalize = df.loc[:, df.columns != 'blacklisted'] # nebrat hodnoty z posledného stĺpca
+    #normalize values in dataset
+    df_normalize = df.loc[:, df.columns != 'blacklisted']
     min_max_scaler = preprocessing.MinMaxScaler()
     x_scaled = min_max_scaler.fit_transform(df_normalize.values)
     x_scaled = np.append(x_scaled, df.loc[:, df.columns == 'blacklisted'], axis=1)
@@ -342,6 +346,7 @@ def createCSVfromPcap(pcap, filename):
                                'land', 'urgent', 'ja3', 'ja3Ver', 'ja3Cipher',
                                'ja3Extension', 'ja3Ec', 'ja3Ecpf', 'blacklisted'])
     df = df.iloc[0:0]
+
 
 for root, dirs, files in os.walk('pcap_used'):
     for name in files:
