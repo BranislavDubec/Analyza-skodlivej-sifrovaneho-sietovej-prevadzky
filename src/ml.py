@@ -9,8 +9,6 @@ __author__ = "Branislav Dubec"
 __credits__ = ["Petr Chmelar"]
 __version__ = "1.0.0"
 
-
-
 import pandas as pd
 import numpy as np
 import os
@@ -27,7 +25,6 @@ from sklearn.neural_network import MLPClassifier
 import scikitplot as skplt
 import time
 
-
 # dict of accuracies on tested instancies with correspondning estimator
 accuracies = {}
 # best value of tested instancies
@@ -40,22 +37,20 @@ test1 = pd.read_csv("csv_used\\normalized\\2021-02-08-traffic-analysis-exercise_
 test2 = pd.read_csv("csv_used\\normalized\\2020-02-21-traffic-analysis-exercise_normalized.csv", header=None)
 train1 = pd.read_csv("csv_used\\normalized\\2018-12-18-traffic-analysis-exercise_normalized.csv", header=None)
 
-
 # separates features and labels
-x = train.iloc[: , :-1]
-y = train.iloc[: , -1: ]
-x1 = train1.iloc[: , :-1]
-y1 = train1.iloc[: , -1: ]
+x = train.iloc[:, :-1]
+y = train.iloc[:, -1:]
+x1 = train1.iloc[:, :-1]
+y1 = train1.iloc[:, -1:]
 
+x_test = test.iloc[:, :-1]
+y_test = test.iloc[:, -1:]
 
-x_test = test.iloc[ : , :-1]
-y_test = test.iloc[: , -1: ]
+x_test1 = test1.iloc[:, :-1]
+y_test1 = test1.iloc[:, -1:]
 
-x_test1 = test1.iloc[ : , :-1]
-y_test1 = test1.iloc[: , -1: ]
-
-x_test2 = test2.iloc[ : , :-1]
-y_test2 = test2.iloc[: , -1: ]
+x_test2 = test2.iloc[:, :-1]
+y_test2 = test2.iloc[:, -1:]
 
 # appends test and train datasets; to have more instancies
 x_test = x_test.append(x_test1)
@@ -68,19 +63,18 @@ x = x.append(x1)
 
 y = y.append(y1)
 
-
-
 """
     Returns list of best parameters found in function GridSearch().
     Display on standard output additional information.
 """
+
+
 def bestParamsfromGrid(grid):
     best_std = grid.cv_results_['std_test_score'][grid.best_index_]
     params_dic = []
     for i in range(len(grid.cv_results_['rank_test_score'])):
         if grid.cv_results_['rank_test_score'][i] == 1 and best_std >= grid.cv_results_['std_test_score'][i]:
             params_dic.append(grid.cv_results_['params'][i])
-
 
     print("Best parameters set found in grid:")
     print()
@@ -93,7 +87,7 @@ def bestParamsfromGrid(grid):
     means = grid.cv_results_['mean_test_score']
     stds = grid.cv_results_['std_test_score']
 
-    #prints all the values in grid
+    # prints all the values in grid
     for mean, std, params in zip(means, stds, grid.cv_results_['params']):
         print("%f (+/-%f) for %r"
               % (mean, std * 2, params))
@@ -105,8 +99,10 @@ def bestParamsfromGrid(grid):
     Fits classifier and sets variable 'best' to best predicted value on tested instancies.
     Display additional information on standart output.
 """
+
+
 def fitPredict(clf):
-    global best,accuracies
+    global best, accuracies
     print("Classifier:", clf)
     print("Fitting")
     clf.fit(x, y)
@@ -133,7 +129,9 @@ def fitPredict(clf):
     Display classification report.
     Display additional information on standard output.
 """
-def bestPredict(score_alg,clf):
+
+
+def bestPredict(score_alg, clf):
     print("Accuracy on cross valuidation on tested instancies.")
     scores = sklearn.model_selection.cross_validate(clf, x_test, y_test, cv=5, scoring='accuracy',
                                                     return_train_score=True)
@@ -146,7 +144,7 @@ def bestPredict(score_alg,clf):
 
     skplt.metrics.plot_confusion_matrix(y_test, clf.predict(x_test))
 
-    plt.title("\n".join(wrap("scoring: " + score_alg +  " parameters of classifier: " + str(clf),100)))
+    plt.title("\n".join(wrap("scoring: " + score_alg + " parameters of classifier: " + str(clf), 100)))
     name = str(clf).replace('\n', '')
     name = name.replace('\t', '')
     plt.savefig(score_alg + " " + name + '.jpg', bbox_inches='tight')
@@ -160,7 +158,6 @@ def bestPredict(score_alg,clf):
     # incorr = np.where(y_test.squeeze().values.reshape(-1, 1) != pred.reshape(-1, 1))[0]
     # print("correct index : ", corr)
     # print("incorr index: ", incorr)
-
 
 
 # number of good and bad instancies in datasets
@@ -179,8 +176,6 @@ def bestPredict(score_alg,clf):
 # exit()
 
 
-
-
 # gamma = 2^-15, 2^-13-..... 2^3
 # C =´2^-5.... 2^12
 """
@@ -188,23 +183,21 @@ def bestPredict(score_alg,clf):
     param_grid = values for SVM technique.
     scores = different scoring for gridsearch().
 """
-param_grid  = [{'kernel': ['rbf'], 'gamma': [0.00003051757,0.00006103515, 0.00012207031, 0.00024414062,
-                                             0.00048828125, 0.0009765625, 0.001953125,
-                                             0.00390625, 0.0078125, 0.015625, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8],
-                     'C': [0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]},
-                    {'kernel': ['linear'], 'C': [0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]},
-                    {'C': [0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
-                     'gamma': [0.00003051757,0.00006103515, 0.00012207031, 0.00024414062,
-                                             0.00048828125, 0.0009765625, 0.001953125,
-                                             0.00390625, 0.0078125, 0.015625, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8],
-                     'kernel': ['sigmoid']}
-                    ]
+param_grid = [{'kernel': ['rbf'], 'gamma': [0.00003051757, 0.00006103515, 0.00012207031, 0.00024414062,
+                                            0.00048828125, 0.0009765625, 0.001953125,
+                                            0.00390625, 0.0078125, 0.015625, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4,
+                                            8],
+               'C': [0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]},
+              {'kernel': ['linear'],
+               'C': [0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096]},
+              {'C': [0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096],
+               'gamma': [0.00003051757, 0.00006103515, 0.00012207031, 0.00024414062,
+                         0.00048828125, 0.0009765625, 0.001953125,
+                         0.00390625, 0.0078125, 0.015625, 0.03125, 0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8],
+               'kernel': ['sigmoid']}
+              ]
 
 scores = ['precision', 'accuracy']
-
-
-
-
 
 for score in scores:
     best = 0
@@ -214,30 +207,27 @@ for score in scores:
     print()
 
     grid = sklearn.model_selection.GridSearchCV(
-        sklearn.svm.SVC(), param_grid, scoring='%s' % score, cv=5 , refit=True
+        sklearn.svm.SVC(), param_grid, scoring='%s' % score, cv=5, refit=True
     )
     grid.fit(x, y)
-
 
     params_dic = bestParamsfromGrid(grid)
 
     for param in params_dic:
         try:
             clf = svm.SVC()
-            clf.set_params(C=param['C'], gamma=param['gamma'], kernel=param['kernel'],probability=True)
+            clf.set_params(C=param['C'], gamma=param['gamma'], kernel=param['kernel'], probability=True)
         except:
             clf = svm.SVC()
-            clf.set_params(C=param['C'], kernel=param['kernel'],probability=True)
+            clf.set_params(C=param['C'], kernel=param['kernel'], probability=True)
 
         fitPredict(clf)
-    print("Best value on tested instancies: ",best)
+    print("Best value on tested instancies: ", best)
     print("Accuracies of tested instancies for each estimator in params_dic:")
     print(accuracies)
     end = time.time()
-    print("Time in seconds: ", end-start)
+    print("Time in seconds: ", end - start)
     bestPredict(score, accuracies[best])
-
-
 
 """
     K-nearest neighbor technique.
@@ -245,11 +235,10 @@ for score in scores:
     scores = different scoring for gridsearch().
 """
 
-
-
 k_range = list(range(1, 31))
 
-param_grid = {'n_neighbors' : k_range, 'weights' : ['uniform', 'distance'], 'algorithm' : ['ball_tree', 'kd_tree', 'brute'] }
+param_grid = {'n_neighbors': k_range, 'weights': ['uniform', 'distance'],
+              'algorithm': ['ball_tree', 'kd_tree', 'brute']}
 
 scores = ['precision', 'accuracy']
 for score in scores:
@@ -258,13 +247,15 @@ for score in scores:
     start = time.time()
     print("# Tuning hyper-parameters for %s" % score)
     print()
-    grid = sklearn.model_selection.GridSearchCV(sklearn.neighbors.KNeighborsClassifier(), param_grid, cv=10, scoring=score)
-    grid.fit(x,y)
+    grid = sklearn.model_selection.GridSearchCV(sklearn.neighbors.KNeighborsClassifier(), param_grid, cv=10,
+                                                scoring=score)
+    grid.fit(x, y)
 
     params_dic = bestParamsfromGrid(grid)
 
     for param in params_dic:
-        clf  = sklearn.neighbors.KNeighborsClassifier(n_neighbors = param['n_neighbors'], algorithm = param['algorithm'], weights = param['weights'])
+        clf = sklearn.neighbors.KNeighborsClassifier(n_neighbors=param['n_neighbors'], algorithm=param['algorithm'],
+                                                     weights=param['weights'])
         fitPredict(clf)
 
     print("Best value on tested instancies: ", best)
@@ -272,8 +263,7 @@ for score in scores:
     print(accuracies)
     end = time.time()
     print("Time in seconds: ", end - start)
-    bestPredict(score,accuracies[best])
-
+    bestPredict(score, accuracies[best])
 
 """
     Decision tree technique.
@@ -282,18 +272,17 @@ for score in scores:
     scores = different scoring for gridsearch().
 """
 
-
 pipe = Pipeline(steps=[
-                           ('pca', sklearn.decomposition.PCA()),
-                           ('dec_tree', tree.DecisionTreeClassifier())])
+    ('pca', sklearn.decomposition.PCA()),
+    ('dec_tree', tree.DecisionTreeClassifier())])
 
-n_components = list(range(1,x.shape[1]+1,1))
+n_components = list(range(1, x.shape[1] + 1, 1))
 criterion = ['gini', 'entropy']
-max_depth = [2,4,6,8,10,12]
+max_depth = [2, 4, 6, 8, 10, 12]
 
 param_grid = {
-    'pca__n_components' : n_components,
-    'dec_tree__criterion' : criterion, 'dec_tree__max_depth' : max_depth,
+    'pca__n_components': n_components,
+    'dec_tree__criterion': criterion, 'dec_tree__max_depth': max_depth,
 }
 
 for score in scores:
@@ -302,17 +291,15 @@ for score in scores:
     start = time.time()
     print("# Tuning hyper-parameters for %s" % score)
     grid = sklearn.model_selection.GridSearchCV(pipe, param_grid, scoring=score)
-    grid.fit(x,y)
+    grid.fit(x, y)
     params_dic = bestParamsfromGrid(grid)
 
-
-
-
     for param in params_dic:
-        dt_clf  = sklearn.tree.DecisionTreeClassifier(criterion = param['dec_tree__criterion'], max_depth = param['dec_tree__max_depth'])
-        pca_clf = sklearn.decomposition.PCA(n_components = param['pca__n_components'])
+        dt_clf = sklearn.tree.DecisionTreeClassifier(criterion=param['dec_tree__criterion'],
+                                                     max_depth=param['dec_tree__max_depth'])
+        pca_clf = sklearn.decomposition.PCA(n_components=param['pca__n_components'])
         clf = Pipeline([('pca', pca_clf),
-                         ('tree', dt_clf)])
+                        ('tree', dt_clf)])
         fitPredict(clf)
 
     print("Best value on tested instancies: ", best)
@@ -320,7 +307,7 @@ for score in scores:
     print(accuracies)
     end = time.time()
     print("Time in seconds: ", end - start)
-    bestPredict(score,accuracies[best])
+    bestPredict(score, accuracies[best])
 
 """
     Multi layer perceptron technique.
@@ -330,14 +317,13 @@ for score in scores:
 
 mlp = MLPClassifier(max_iter=300)
 param_grid = {
-    'hidden_layer_sizes': [(50,50,50), (50,100,50), (100,)],
+    'hidden_layer_sizes': [(50, 50, 50), (50, 100, 50), (100,)],
     'activation': ['tanh', 'relu'],
     'solver': ['lbfgs', 'sgd', 'adam'],
     'alpha': [0.0001, 0.05],
-    'learning_rate': ['constant','adaptive'],
+    'learning_rate': ['constant', 'adaptive'],
 }
 for score in scores:
-
 
     best = 0
     accuracies = {}
