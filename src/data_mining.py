@@ -329,7 +329,7 @@ def createCSVfromPcap(pcap, filename):
         except:
 
             pass
-    df.to_csv("csv_used" + '\\' + str(filename)[:-5]  + '.csv')
+    df.to_csv("csv_used" + '/' + str(filename)[:-5]  + '.csv')
     df = separataJA3fields(df)
 
     #normalize values in dataset
@@ -339,7 +339,7 @@ def createCSVfromPcap(pcap, filename):
     x_scaled = np.append(x_scaled, df.loc[:, df.columns == 'blacklisted'], axis=1)
 
     df = pd.DataFrame(x_scaled, columns=columns)
-    df.to_csv("csv_used\\normalized\\"  + str(filename)[:-5] + '_normalized' + '.csv', header=False, index=False)
+    df.to_csv("csv_used/normalized/"  + str(filename)[:-5] + '_normalized' + '.csv', header=False, index=False)
     print(filename)
     df = pd.DataFrame(columns=['duration', 'srcIp', 'srcPort', 'dstIp',
                                'dstPort', 'service', 'srcBytes', 'dstBytes', 'flag',

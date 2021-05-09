@@ -2,7 +2,7 @@
     Script uses 4 tehniques of machine learning to train and test dataset defined in the beginning.
     Each technique is hypertuned by method GridSearch and the best parameters are picked on test datas;
     and creates confusion matrics of each technique that is shown and stored as jpg format.
-    Name of the file is scorint parameter and parameters of the estimator.
+    Name of the file is scoring parameter and parameters of the estimator.
     Script also display additional information on standard output.
 """
 __author__ = "Branislav Dubec"
@@ -15,7 +15,7 @@ import os
 from textwrap import wrap
 import sklearn
 from sklearn import neighbors
-from libsvm.svmutil import *
+
 from sklearn import svm
 from sklearn import tree
 from sklearn.pipeline import Pipeline
@@ -31,11 +31,11 @@ accuracies = {}
 best = 0
 
 # load files to train and test
-train = pd.read_csv("csv_used\\normalized\\2021-01-21-traffic-analysis-exercise_normalized.csv", header=None)
-test = pd.read_csv("csv_used\\normalized\\2015-03-19_capture-win_normalized.csv", header=None)
-test1 = pd.read_csv("csv_used\\normalized\\2021-02-08-traffic-analysis-exercise_normalized.csv ", header=None)
-test2 = pd.read_csv("csv_used\\normalized\\2020-02-21-traffic-analysis-exercise_normalized.csv", header=None)
-train1 = pd.read_csv("csv_used\\normalized\\2018-12-18-traffic-analysis-exercise_normalized.csv", header=None)
+train = pd.read_csv("csv_used/normalized/2021-01-21-traffic-analysis-exercise_normalized.csv", header=None)
+test = pd.read_csv("csv_used/normalized/2015-03-19_capture-win_normalized.csv", header=None)
+test1 = pd.read_csv("csv_used/normalized/2021-02-08-traffic-analysis-exercise_normalized.csv ", header=None)
+test2 = pd.read_csv("csv_used/normalized/2020-02-21-traffic-analysis-exercise_normalized.csv", header=None)
+train1 = pd.read_csv("csv_used/normalized/2018-12-18-traffic-analysis-exercise_normalized.csv", header=None)
 
 # separates features and labels
 x = train.iloc[:, :-1]
