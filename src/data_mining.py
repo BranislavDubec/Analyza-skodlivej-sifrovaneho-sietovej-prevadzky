@@ -78,13 +78,13 @@ def client_ja3(packet):
         tls_version = int(packet.tls.handshake_version, 16)
         tls_version = str(tls_version)
     if 'handshake_ciphersuites' in packet.tls.field_names:
-        p = str(packet.tls).split('\r\n')
+        p = str(packet.tls).split('\n')
         cipher_list = []
         ciphers = ''
         for sentence in p:
             if sentence.startswith('\tCipher Spec:') or sentence.startswith('\tCipher Suite:'):
                 cipher = sentence.split('(')[1]
-                cipher = cipher[:-1]
+                cipher = cipher.split(')')[0]
                 if cipher not in GREASE_TABLE:
                     cipher = int(cipher, 0)
                     cipher_list.append(int(cipher))
@@ -94,13 +94,13 @@ def client_ja3(packet):
         ciphers = ciphers[:-1]
 
     if 'handshake_extension_type' in packet.tls.field_names:
-        p = str(packet.tls).split('\r\n')
+        p = str(packet.tls).split('\n')
         extension_list = []
         extensions = ''
         for sentence in p:
             if sentence.startswith('\tType:'):
                 extension = sentence.split('(')[1]
-                extension = extension[:-1]
+                extension = extension.split(')')[0]
                 if int(extension, 16) not in GREASE_TABLE:
                     extension = int(extension, 0)
                     extension_list.append(int(extension))
@@ -109,13 +109,13 @@ def client_ja3(packet):
             extensions = extensions + str(ext) + '-'
         extensions = extensions[:-1]
     if 'handshake_extensions_supported_group' in packet.tls.field_names:
-        p = str(packet.tls).split('\r\n')
+        p = str(packet.tls).split('\n')
         ec_list = []
         elliptic_curve = ''
         for sentence in p:
             if sentence.startswith('\tSupported Group:'):
                 eliptic = sentence.split('(')[1]
-                eliptic = eliptic[:-1]
+                eliptic = eliptic.split(')')[0]
                 if int(eliptic, 16) not in GREASE_TABLE:
                     eliptic = int(eliptic, 0)
                     ec_list.append(int(eliptic))
@@ -124,13 +124,13 @@ def client_ja3(packet):
             elliptic_curve = elliptic_curve + str(num) + '-'
         elliptic_curve = elliptic_curve[:-1]
     if 'handshake_extensions_ec_point_format' in packet.tls.field_names:
-        p = str(packet.tls).split('\r\n')
+        p = str(packet.tls).split('\n')
         ecpf_list = []
         ec_pointformat = ''
         for sentence in p:
             if sentence.startswith('\tEC point format:'):
                 pointformat = sentence.split('(')[1]
-                pointformat = pointformat[:-1]
+                pointformat = pointformat.split(')')[0]
                 if int(pointformat, 16) not in GREASE_TABLE:
                     pointformat = int(pointformat, 0)
                     ecpf_list.append(int(pointformat))
@@ -301,7 +301,7 @@ def createCSVfromPcap(pcap, filename):
     ct=0
     for packet in cap:
         ct = ct + 1
-        print("Packet number", str(ct), str(filename))
+        #print("Packet number", str(ct), str(filename))
         try:
             if int(packet.tcp.stream) not in session:
                 processFirstPacket(packet)

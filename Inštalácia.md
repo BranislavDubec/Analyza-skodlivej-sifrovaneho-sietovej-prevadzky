@@ -1,6 +1,6 @@
 # Poiadavky na spustenie
 
-Je potrebné ma nainštalovanı programovací jazyk **Python**, a nainštalovanú **postgresSQL** databázovı systém.
+Je potrebné ma nainštalovanı programovací jazyk **Python**, a nainštalovanú **postgresSQL** databázovı systém, Wireshark a Tshark.
 
 
 
